@@ -1,3 +1,5 @@
+// hw0: partnered with Jiajie Shi
+
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
