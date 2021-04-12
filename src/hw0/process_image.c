@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <math.h>
 #include "image.h"
+// collaborated with Yuan Wang
 
 typedef struct{
     float r, g, b;
