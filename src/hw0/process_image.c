@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <math.h>
 #include "image.h"
+// collaborated with Yuan Wang
 
 typedef struct{
     float r, g, b;
@@ -38,7 +39,7 @@ void set_pixel(image im, int x, int y, int c, float v)
 {
     // invalid coordinate
     if (x < 0 || x >= im.w || y < 0 || y >= im.h || c < 0 || c >= im.c) {
-        printf("invalid coordinate\n");
+        // printf("invalid coordinate\n");
         return;
     }
     im.data[get_offset(im, x, y, c)] = v;
