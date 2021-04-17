@@ -149,13 +149,33 @@ image sub_image(image a, image b)
 image make_gx_filter()
 {
     // TODO
-    return make_image(1,1,1);
+    image filter = make_box_filter(3);
+    set_pixel(filter, 0, 0, 0, -1);
+    set_pixel(filter, 2, 0, 0, 1);
+    set_pixel(filter, 0, 2, 0, -1);
+    set_pixel(filter, 2, 2, 0, 1);
+    set_pixel(filter, 1, 0, 0, 0);
+    set_pixel(filter, 1, 2, 0, -2);
+    set_pixel(filter, 0, 1, 0, 2);
+    set_pixel(filter, 2, 1, 0, 0);
+    set_pixel(filter, 1, 1, 0, 0);
+    return filter;
 }
 
 image make_gy_filter()
 {
     // TODO
-    return make_image(1,1,1);
+    image filter = make_box_filter(3);
+    set_pixel(filter, 0, 0, 0, -1);
+    set_pixel(filter, 2, 0, 0, -1);
+    set_pixel(filter, 0, 2, 0, 1);
+    set_pixel(filter, 2, 2, 0, 1);
+    set_pixel(filter, 1, 0, 0, -2);
+    set_pixel(filter, 1, 2, 0, 0);
+    set_pixel(filter, 0, 1, 0, 0);
+    set_pixel(filter, 2, 1, 0, 2);
+    set_pixel(filter, 1, 1, 0, 0);
+    return filter;
 }
 
 void feature_normalize(image im)
