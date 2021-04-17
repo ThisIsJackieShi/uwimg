@@ -9,18 +9,53 @@
 void l1_normalize(image im)
 {
     // TODO
+    int w = im.w;
+    int h = im.h;
+    for(int c = 0; c < im.c; c++){
+        for(int i = 0; i < h; i++){
+            for(int j = 0; j < w; j++){
+                set_pixel(im, j, i, c, get_pixel(im, j, i, c)/(w * h));
+            }
+        }
+    }
 }
 
 image make_box_filter(int w)
 {
     // TODO
-    return make_image(1,1,1);
+    image result = make_image(w, w, 1);
+    for(int i = 0; i < w; i++){
+        for(int j = 0; j < w; j++){
+            set_pixel(result, j, i, 1, 1);
+        }
+    }
+    l1_normalize(result);
+    return result;
+}
+
+int filter_channel_fit(image filter, int channel){
+    return filter.c == 1? 1:channel;
 }
 
 image convolve_image(image im, image filter, int preserve)
 {
     // TODO
-    return make_image(1,1,1);
+    image result = make_image(im.w, im.h, preserve? im.c : 1);
+    assert(filter.c == im.c || filter.c == 1);
+    for(int c = 0; c < result.c; c++){
+        for(int i = 0; i < result.h; i++){
+            for(int j = 0; j < result.w; j++){
+                float convolved = 0;
+                for(int m = -1; m < 2; m++){
+                    for(int n = -1; m < 2; m++){
+                        convolved += get_pixel(im, j+m, i+n, c) * get_pixel(filter, j+m, i+n, filter_channel_fit(filter, c));
+                    }
+                }
+                set_pixel(result, j, i, c, convolved);
+            }
+        }
+    }
+    return result;
 }
 
 image make_highpass_filter()
