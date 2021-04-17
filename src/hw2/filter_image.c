@@ -11,10 +11,21 @@ void l1_normalize(image im)
     // TODO
     int w = im.w;
     int h = im.h;
+    float sum = 0;
     for(int c = 0; c < im.c; c++){
         for(int i = 0; i < h; i++){
             for(int j = 0; j < w; j++){
-                set_pixel(im, j, i, c, get_pixel(im, j, i, c)/(w * h));
+                sum += get_pixel(im, j, i, c);
+            }
+        }
+    }
+    if (sum == 0.0) {
+        return;
+    }
+    for(int c = 0; c < im.c; c++){
+        for(int i = 0; i < h; i++){
+            for(int j = 0; j < w; j++){
+                set_pixel(im, j, i, c, get_pixel(im, j, i, c) / sum);
             }
         }
     }
@@ -48,7 +59,7 @@ image convolve_image(image im, image filter, int preserve)
                 for(int j = 0; j < result.w; j++){
                     float convolved = 0;
                     for(int m = -filter.w/2; m < filter.w/2 + 1; m++){
-                        for(int n = -filter.w/2; n < filter.w/2 + 1; n++){
+                        for(int n = -filter.h/2; n < filter.h/2 + 1; n++){
                             convolved += get_pixel(im, j+m, i+n, c) * get_pixel(filter, filter.w/2+m, filter.h/2+n, filter_channel_fit(filter, c));
                         }
                     }
@@ -60,14 +71,14 @@ image convolve_image(image im, image filter, int preserve)
         for(int i = 0; i < result.h; i++){
             for(int j = 0; j < result.w; j++){
                 float convolved = 0;
-                for(int c = 0; c < result.c; c++){
+                for(int c = 0; c < im.c; c++){
                     for(int m = -filter.w/2; m < filter.w/2 + 1; m++){
-                        for(int n = -filter.w/2; n < filter.w/2 + 1; n++){
+                        for(int n = -filter.h/2; n < filter.h/2 + 1; n++){
                             convolved += get_pixel(im, j+m, i+n, c) * get_pixel(filter, filter.w/2+m, filter.h/2+n, filter_channel_fit(filter, c));
                         }
                     }
                 }
-                set_pixel(result, j, i, 1, convolved);
+                set_pixel(result, j, i, 0, convolved);
             }
         }
     }

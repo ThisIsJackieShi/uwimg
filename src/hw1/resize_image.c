@@ -1,6 +1,6 @@
 #include <math.h>
 #include "image.h"
-// colaborated with Wang Yuan
+// colaborated with Jiajie Shi
 
 float nn_interpolate(image im, float x, float y, int c)
 {
