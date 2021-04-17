@@ -262,7 +262,7 @@ image *sobel_image(image im)
             float x = get_pixel(horizontal, w, h, 0);
             float y = get_pixel(vertical, w, h, 0);
             set_pixel(result[0], w, h, 0, sqrt(pow(x, 2) + pow(y, 2)));
-            set_pixel(result[1], w, h, 0, atan(y / x));
+            set_pixel(result[1], w, h, 0, atan2(y, x));
         }
     }
 
