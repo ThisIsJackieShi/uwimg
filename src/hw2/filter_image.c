@@ -134,10 +134,12 @@ image make_emboss_filter()
 }
 
 // Question 2.2.1: Which of these filters should we use preserve when we run our convolution and which ones should we not? Why?
-// Answer: TODO
+// Answer: 
+// Perserve: box-blur filter, sharpen filter, emboss filter; because we want to keep the colors of the graph
+// Not Perserve: highpass filter. Because we only want to find the edges and their locations. 
 
 // Question 2.2.2: Do we have to do any post-processing for the above filters? Which ones and why?
-// Answer: TODO
+// Answer: Highpass filter. Since it is smashed to one channel, we might need to process it to black-and-white in order to view it. 
 
 image make_gaussian_filter(float sigma)
 {
