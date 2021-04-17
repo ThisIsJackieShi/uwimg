@@ -5,6 +5,7 @@
 #include <assert.h>
 #include "image.h"
 #define TWOPI 6.2831853
+#define PI 3.1415926
 
 void l1_normalize(image im)
 {
@@ -190,48 +191,107 @@ image sub_image(image a, image b)
 image make_gx_filter()
 {
     // TODO
-    image filter = make_box_filter(3);
+    image filter = make_image(3, 3, 1);
     set_pixel(filter, 0, 0, 0, -1);
-    set_pixel(filter, 2, 0, 0, 1);
-    set_pixel(filter, 0, 2, 0, -1);
-    set_pixel(filter, 2, 2, 0, 1);
     set_pixel(filter, 1, 0, 0, 0);
-    set_pixel(filter, 1, 2, 0, -2);
-    set_pixel(filter, 0, 1, 0, 2);
-    set_pixel(filter, 2, 1, 0, 0);
+    set_pixel(filter, 2, 0, 0, 1);
+    set_pixel(filter, 0, 1, 0, -2);
     set_pixel(filter, 1, 1, 0, 0);
+    set_pixel(filter, 2, 1, 0, 2);
+    set_pixel(filter, 0, 2, 0, -1);
+    set_pixel(filter, 1, 2, 0, 0);
+    set_pixel(filter, 2, 2, 0, 1);
     return filter;
 }
 
 image make_gy_filter()
 {
     // TODO
-    image filter = make_box_filter(3);
+    image filter = make_image(3, 3, 1);
     set_pixel(filter, 0, 0, 0, -1);
-    set_pixel(filter, 2, 0, 0, -1);
-    set_pixel(filter, 0, 2, 0, 1);
-    set_pixel(filter, 2, 2, 0, 1);
     set_pixel(filter, 1, 0, 0, -2);
-    set_pixel(filter, 1, 2, 0, 0);
+    set_pixel(filter, 2, 0, 0, -1);
     set_pixel(filter, 0, 1, 0, 0);
-    set_pixel(filter, 2, 1, 0, 2);
     set_pixel(filter, 1, 1, 0, 0);
+    set_pixel(filter, 2, 1, 0, 0);
+    set_pixel(filter, 0, 2, 0, 1);
+    set_pixel(filter, 1, 2, 0, 2);
+    set_pixel(filter, 2, 2, 0, 1);
     return filter;
 }
 
 void feature_normalize(image im)
 {
-    // TODO
+    float min_val = get_pixel(im, 0, 0, 0);
+    float max_val = get_pixel(im, 0, 0, 0);
+    for (int c = 0; c < im.c; c++) {
+        for (int h = 0; h < im.h; h++) {
+            for (int w = 0; w < im.w; w++) {
+                min_val = min_val > get_pixel(im, w, h, c) ? get_pixel(im, w, h, c) : min_val;
+                max_val = max_val < get_pixel(im, w, h, c) ? get_pixel(im, w, h, c) : max_val;
+            }
+        }
+    }
+    
+    for (int c = 0; c < im.c; c++) {
+        for (int h = 0; h < im.h; h++) {
+            for (int w = 0; w < im.w; w++) {
+                if (max_val == min_val) {
+                    set_pixel(im, w, h, c, 0);
+                } else {
+                    float p = get_pixel(im, w, h, c);
+                    p = (p - min_val) / (max_val - min_val);
+                    set_pixel(im, w, h, c, p);
+                }
+            }
+        }
+    }
 }
 
 image *sobel_image(image im)
 {
-    // TODO
-    return calloc(2, sizeof(image));
+    image horizontal = convolve_image(im, make_gx_filter(), 0);
+    image vertical = convolve_image(im, make_gy_filter(), 0);
+
+    image* result = calloc(2, sizeof(image));
+    result[0] = make_image(im.w, im.h, 1);
+    result[1] = make_image(im.w, im.h, 1);
+
+    for (int h = 0; h < im.h; h++) {
+        for (int w = 0; w < im.w; w++) {
+            float x = get_pixel(horizontal, w, h, 0);
+            float y = get_pixel(vertical, w, h, 0);
+            set_pixel(result[0], w, h, 0, sqrt(pow(x, 2) + pow(y, 2)));
+            set_pixel(result[1], w, h, 0, atan(y / x));
+        }
+    }
+
+    free_image(horizontal);
+    free_image(vertical);
+
+    return result;
 }
 
 image colorize_sobel(image im)
 {
-    // TODO
-    return make_image(1,1,1);
+    image result = make_image(im.w, im.h, 3);
+    image* sobels = sobel_image(im);
+    feature_normalize(sobels[0]);
+    rgb_to_hsv(result);
+    for (int h = 0; h < result.h; h++) {
+        for (int w = 0; w < result.w; w++) {
+            float angle = (get_pixel(sobels[1], w, h, 0) + (PI / 2)) / PI;
+            float mag = get_pixel(sobels[0], w, h, 0);
+            set_pixel(result, w, h, 0, angle);  // angel for hue
+            set_pixel(result, w, h, 1, mag);    // mag for saturation
+            set_pixel(result, w, h, 2, 1);      // 1 for value
+        }
+    }
+    hsv_to_rgb(result);
+
+    free_image(sobels[0]);
+    free_image(sobels[1]);
+    free(sobels);
+
+    return result;
 }
