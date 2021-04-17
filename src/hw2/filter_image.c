@@ -60,7 +60,7 @@ image convolve_image(image im, image filter, int preserve)
         for(int i = 0; i < result.h; i++){
             for(int j = 0; j < result.w; j++){
                 float convolved = 0;
-                for(int c = 0; j < result.c; c++){
+                for(int c = 0; c < result.c; c++){
                     for(int m = -filter.w/2; m < filter.w/2 + 1; m++){
                         for(int n = -filter.w/2; n < filter.w/2 + 1; n++){
                             convolved += get_pixel(im, j+m, i+n, c) * get_pixel(filter, filter.w/2+m, filter.h/2+n, filter_channel_fit(filter, c));
