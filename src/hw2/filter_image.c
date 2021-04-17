@@ -26,7 +26,7 @@ image make_box_filter(int w)
     image result = make_image(w, w, 1);
     for(int i = 0; i < w; i++){
         for(int j = 0; j < w; j++){
-            set_pixel(result, j, i, 1, 1);
+            set_pixel(result, j, i, 0, 1.0);
         }
     }
     l1_normalize(result);
@@ -34,7 +34,7 @@ image make_box_filter(int w)
 }
 
 int filter_channel_fit(image filter, int channel){
-    return filter.c == 1? 1:channel;
+    return filter.c == 1? 0:channel;
 }
 
 image convolve_image(image im, image filter, int preserve)
@@ -42,13 +42,13 @@ image convolve_image(image im, image filter, int preserve)
     // TODO
     image result = make_image(im.w, im.h, preserve == 1? im.c : 1);
     assert(filter.c == im.c || filter.c == 1);
-    if(preserve){
+    if(preserve == 1){
         for(int c = 0; c < result.c; c++){
             for(int i = 0; i < result.h; i++){
                 for(int j = 0; j < result.w; j++){
                     float convolved = 0;
-                    for(int m = -1; m < 2; m++){
-                        for(int n = -1; n < 2; n++){
+                    for(int m = -filter.w/2; m < filter.w/2 + 1; m++){
+                        for(int n = -filter.w/2; n < filter.w/2 + 1; n++){
                             convolved += get_pixel(im, j+m, i+n, c) * get_pixel(filter, filter.w/2+m, filter.h/2+n, filter_channel_fit(filter, c));
                         }
                     }
@@ -56,13 +56,13 @@ image convolve_image(image im, image filter, int preserve)
                 }
             }
         }
-    } else {
+    } else { // smash pic to one
         for(int i = 0; i < result.h; i++){
             for(int j = 0; j < result.w; j++){
                 float convolved = 0;
                 for(int c = 0; j < result.c; c++){
-                    for(int m = -1; m < 2; m++){
-                        for(int n = -1; n < 2; n++){
+                    for(int m = -filter.w/2; m < filter.w/2 + 1; m++){
+                        for(int n = -filter.w/2; n < filter.w/2 + 1; n++){
                             convolved += get_pixel(im, j+m, i+n, c) * get_pixel(filter, filter.w/2+m, filter.h/2+n, filter_channel_fit(filter, c));
                         }
                     }
@@ -78,28 +78,48 @@ image make_highpass_filter()
 {
     // TODO
     image filter = make_box_filter(3);
-    set_pixel(filter, 0, 0, 1, 0);
-    set_pixel(filter, 2, 0, 1, 0);
-    set_pixel(filter, 0, 2, 1, 0);
-    set_pixel(filter, 2, 2, 1, 0);
-    set_pixel(filter, 1, 0, 1, -1);
-    set_pixel(filter, 1, 2, 1, -1);
-    set_pixel(filter, 0, 1, 1, -1);
-    set_pixel(filter, 2, 1, 1, -1);
-    set_pixel(filter, 1, 1, 1, 4);
-    return make_image(1,1,1);
+    set_pixel(filter, 0, 0, 0, 0);
+    set_pixel(filter, 2, 0, 0, 0);
+    set_pixel(filter, 0, 2, 0, 0);
+    set_pixel(filter, 2, 2, 0, 0);
+    set_pixel(filter, 1, 0, 0, -1);
+    set_pixel(filter, 1, 2, 0, -1);
+    set_pixel(filter, 0, 1, 0, -1);
+    set_pixel(filter, 2, 1, 0, -1);
+    set_pixel(filter, 1, 1, 0, 4);
+    return filter;
 }
 
 image make_sharpen_filter()
 {
     // TODO
-    return make_image(1,1,1);
+    image filter = make_box_filter(3);
+    set_pixel(filter, 0, 0, 0, 0);
+    set_pixel(filter, 2, 0, 0, 0);
+    set_pixel(filter, 0, 2, 0, 0);
+    set_pixel(filter, 2, 2, 0, 0);
+    set_pixel(filter, 1, 0, 0, -1);
+    set_pixel(filter, 1, 2, 0, -1);
+    set_pixel(filter, 0, 1, 0, -1);
+    set_pixel(filter, 2, 1, 0, -1);
+    set_pixel(filter, 1, 1, 0, 5);
+    return filter;
 }
 
 image make_emboss_filter()
 {
     // TODO
-    return make_image(1,1,1);
+    image filter = make_box_filter(3);
+    set_pixel(filter, 0, 0, 0, -2);
+    set_pixel(filter, 2, 0, 0, 0);
+    set_pixel(filter, 0, 2, 0, 0);
+    set_pixel(filter, 2, 2, 0, 2);
+    set_pixel(filter, 1, 0, 0, -1);
+    set_pixel(filter, 1, 2, 0, 1);
+    set_pixel(filter, 0, 1, 0, -1);
+    set_pixel(filter, 2, 1, 0, 1);
+    set_pixel(filter, 1, 1, 0, 1);
+    return filter;
 }
 
 // Question 2.2.1: Which of these filters should we use preserve when we run our convolution and which ones should we not? Why?
