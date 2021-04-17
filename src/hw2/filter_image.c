@@ -8,7 +8,6 @@
 
 void l1_normalize(image im)
 {
-    // TODO
     int w = im.w;
     int h = im.h;
     float sum = 0;
@@ -33,7 +32,6 @@ void l1_normalize(image im)
 
 image make_box_filter(int w)
 {
-    // TODO
     image result = make_image(w, w, 1);
     for(int i = 0; i < w; i++){
         for(int j = 0; j < w; j++){
@@ -50,7 +48,6 @@ int filter_channel_fit(image filter, int channel){
 
 image convolve_image(image im, image filter, int preserve)
 {
-    // TODO
     image result = make_image(im.w, im.h, preserve == 1? im.c : 1);
     assert(filter.c == im.c || filter.c == 1);
     if(preserve == 1){
@@ -87,7 +84,6 @@ image convolve_image(image im, image filter, int preserve)
 
 image make_highpass_filter()
 {
-    // TODO
     image filter = make_box_filter(3);
     set_pixel(filter, 0, 0, 0, 0);
     set_pixel(filter, 2, 0, 0, 0);
@@ -103,7 +99,6 @@ image make_highpass_filter()
 
 image make_sharpen_filter()
 {
-    // TODO
     image filter = make_box_filter(3);
     set_pixel(filter, 0, 0, 0, 0);
     set_pixel(filter, 2, 0, 0, 0);
@@ -119,7 +114,6 @@ image make_sharpen_filter()
 
 image make_emboss_filter()
 {
-    // TODO
     image filter = make_box_filter(3);
     set_pixel(filter, 0, 0, 0, -2);
     set_pixel(filter, 2, 0, 0, 0);
@@ -141,10 +135,28 @@ image make_emboss_filter()
 // Question 2.2.2: Do we have to do any post-processing for the above filters? Which ones and why?
 // Answer: Highpass filter. Since it is smashed to one channel, we might need to process it to black-and-white in order to view it. 
 
+float gaussian(float x, float y, float sigma) 
+{
+    float e = exp(- (pow(x, 2) + pow(y, 2)) / (2 * pow(sigma, 2)));
+    return e / (TWOPI * pow(sigma, 2));
+}
+
 image make_gaussian_filter(float sigma)
 {
-    // TODO
-    return make_image(1,1,1);
+    int size = (int) ceil(sigma * 6.0);
+    if (size % 2 == 0) {
+        size++;
+    }
+
+    image filter = make_image(size, size, 1);
+    for (int y = 0; y < size; y++) {
+        for (int x = 0; x < size; x++) {
+            set_pixel(filter, x, y, 0, gaussian(x - (size / 2), y - (size / 2), sigma));
+        }
+    }
+    l1_normalize(filter);
+
+    return filter;
 }
 
 image add_image(image a, image b)
