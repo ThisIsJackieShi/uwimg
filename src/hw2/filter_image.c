@@ -40,18 +40,34 @@ int filter_channel_fit(image filter, int channel){
 image convolve_image(image im, image filter, int preserve)
 {
     // TODO
-    image result = make_image(im.w, im.h, preserve? im.c : 1);
+    image result = make_image(im.w, im.h, preserve == 1? im.c : 1);
     assert(filter.c == im.c || filter.c == 1);
-    for(int c = 0; c < result.c; c++){
+    if(preserve){
+        for(int c = 0; c < result.c; c++){
+            for(int i = 0; i < result.h; i++){
+                for(int j = 0; j < result.w; j++){
+                    float convolved = 0;
+                    for(int m = -1; m < 2; m++){
+                        for(int n = -1; n < 2; n++){
+                            convolved += get_pixel(im, j+m, i+n, c) * get_pixel(filter, filter.w/2+m, filter.h/2+n, filter_channel_fit(filter, c));
+                        }
+                    }
+                    set_pixel(result, j, i, c, convolved);
+                }
+            }
+        }
+    } else {
         for(int i = 0; i < result.h; i++){
             for(int j = 0; j < result.w; j++){
                 float convolved = 0;
-                for(int m = -1; m < 2; m++){
-                    for(int n = -1; m < 2; m++){
-                        convolved += get_pixel(im, j+m, i+n, c) * get_pixel(filter, j+m, i+n, filter_channel_fit(filter, c));
+                for(int c = 0; j < result.c; c++){
+                    for(int m = -1; m < 2; m++){
+                        for(int n = -1; n < 2; n++){
+                            convolved += get_pixel(im, j+m, i+n, c) * get_pixel(filter, filter.w/2+m, filter.h/2+n, filter_channel_fit(filter, c));
+                        }
                     }
                 }
-                set_pixel(result, j, i, c, convolved);
+                set_pixel(result, j, i, 1, convolved);
             }
         }
     }
@@ -61,6 +77,16 @@ image convolve_image(image im, image filter, int preserve)
 image make_highpass_filter()
 {
     // TODO
+    image filter = make_box_filter(3);
+    set_pixel(filter, 0, 0, 1, 0);
+    set_pixel(filter, 2, 0, 1, 0);
+    set_pixel(filter, 0, 2, 1, 0);
+    set_pixel(filter, 2, 2, 1, 0);
+    set_pixel(filter, 1, 0, 1, -1);
+    set_pixel(filter, 1, 2, 1, -1);
+    set_pixel(filter, 0, 1, 1, -1);
+    set_pixel(filter, 2, 1, 1, -1);
+    set_pixel(filter, 1, 1, 1, 4);
     return make_image(1,1,1);
 }
 
