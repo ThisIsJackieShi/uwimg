@@ -6,6 +6,8 @@
 #include "image.h"
 #include "matrix.h"
 
+// collaborated with Wangyuan
+
 // Comparator for matches
 // const void *a, *b: pointers to the matches to compare.
 // returns: result of comparison, 0 if same, 1 if a > b, -1 if a < b.
@@ -118,7 +120,11 @@ image find_and_draw_matches(image a, image b, float sigma, float thresh, int nms
 float l1_distance(float *a, float *b, int n)
 {
     // TODO: return the correct number.
-    return 0;
+    float result = 0;
+    for(int i = 0; i < n; i++){
+        result += abs(a[i] - b[i]);
+    }
+    return result;
 }
 
 // Finds best matches between descriptors of two images.
@@ -138,6 +144,14 @@ match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
         // TODO: for every descriptor in a, find best match in b.
         // record ai as the index in *a and bi as the index in *b.
         int bind = 0; // <- find the best match
+        float min_distance = l1_distance(a[j].data, b[0].data, an < bn? an : bn);
+        for(i = 0; i < bn; ++i){
+            float current_distance = l1_distance(a[j].data, b[0].data, an < bn? an : bn);
+            if(min_distance > current_distance){
+                bind = i;
+                min_distance = current_distance;
+            }
+        }
         m[j].ai = j;
         m[j].bi = bind; // <- should be index in b.
         m[j].p = a[j].p;

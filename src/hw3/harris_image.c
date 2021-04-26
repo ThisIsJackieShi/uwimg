@@ -7,6 +7,8 @@
 #include "matrix.h"
 #include <time.h>
 
+// collaborated with Wangyuan
+
 // Frees an array of descriptors.
 // descriptor *d: the array.
 // int n: number of elements in array.
@@ -212,7 +214,7 @@ descriptor *harris_corner_detector(image im, float sigma, float thresh, int nms,
         for(int j = 0; j < Rnms.w; j++){
             float this_pixel = get_pixel(Rnms, j, i, 0);
             if(this_pixel > thresh){
-                d[count] = describe_index(Rnms, get_offset(Rnms, j, i, 0));
+                d[count] = describe_index(Rnms, i * Rnms.w + j);
                 count++;
             }
         }
