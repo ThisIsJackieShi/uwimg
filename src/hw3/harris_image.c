@@ -138,7 +138,10 @@ image cornerness_response(image S)
     // We'll use formulation det(S) - alpha * trace(S)^2, alpha = .06.
     for(int i = 0; i < R.h; i++){
         for(int j = 0; j < R.w; j++){
-            set_pixel(R, j, i, 0, det(S) - 0.06 * pow(trace(S), 2));
+            float x2 = get_pixel(S, j, i, 0);
+            float y2 = get_pixel(S, j, i, 1);
+            float xy = get_pixel(S, j, i, 2);
+            set_pixel(R, j, i, 0, x2*y2 - xy*xy - 0.06 * pow(x2 + y2, 2));
         }
     }
     return R;
