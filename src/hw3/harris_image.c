@@ -159,6 +159,18 @@ image nms_image(image im, int w)
     //     for neighbors within w:
     //         if neighbor response greater than pixel response:
     //             set response to be very low (I use -999999 [why not 0??])
+    for(int i = 0; i < r.h; i++){
+        for(int j = 0; j < r.w; j++){
+            float this_value = get_pixel(r, j, i, 0);
+            for(int m = -w; m < w + 1; m++){
+                for(int n = -w; n < w + 1; n++){
+                    if(get_pixel(r, j+m, i+n, 0) > this_value){
+                        set_pixel(r, j, i, 0, -999999);
+                    }
+                }
+            }
+        }
+    }
     return r;
 }
 
@@ -182,13 +194,29 @@ descriptor *harris_corner_detector(image im, float sigma, float thresh, int nms,
 
 
     //TODO: count number of responses over threshold
-    int count = 1; // change this
+    int count = 0;
+    for(int i = 0; i < Rnms.h; i++){
+        for(int j = 0; j < Rnms.w; j++){
+            float this_pixel = get_pixel(Rnms, j, i, 0);
+            if(this_pixel > thresh){
+                count++;
+            }
+        }
+    }
 
-    
     *n = count; // <- set *n equal to number of corners in image.
     descriptor *d = calloc(count, sizeof(descriptor));
     //TODO: fill in array *d with descriptors of corners, use describe_index.
-
+    count = 0;
+    for(int i = 0; i < Rnms.h; i++){
+        for(int j = 0; j < Rnms.w; j++){
+            float this_pixel = get_pixel(Rnms, j, i, 0);
+            if(this_pixel > thresh){
+                d[count] = describe_index(Rnms, get_offset(Rnms, j, i, 0));
+                count++;
+            }
+        }
+    }
 
     free_image(S);
     free_image(R);
