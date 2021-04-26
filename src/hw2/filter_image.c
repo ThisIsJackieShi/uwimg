@@ -7,7 +7,7 @@
 #define TWOPI 6.2831853
 #define PI 3.1415926
 
-// collaborated with Wang Yuan
+// colaborated with Wang Yuan
 void l1_normalize(image im)
 {
     int w = im.w;

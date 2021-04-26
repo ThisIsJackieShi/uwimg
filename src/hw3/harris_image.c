@@ -114,7 +114,18 @@ image structure_matrix(image im, float sigma)
 {
     image S = make_image(im.w, im.h, 3);
     // TODO: calculate structure matrix for im.
-    return S;
+    image dx_filter = make_gx_filter();
+    image dy_filter = make_gy_filter();
+    image x_gradients = convolve_image(im, dx_filter, 0);
+    image y_gradients = convolve_image(im, dy_filter, 0);
+    for(int i = 0; i < im.h; i++){
+        for(int j = 0; j < im.w; j++){
+            set_pixel(S, j, i, 0, pow(get_pixel(x_gradients, j, i, 0), 2));
+            set_pixel(S, j, i, 1, pow(get_pixel(y_gradients, j, i, 0), 2));
+            set_pixel(S, j, i, 2, get_pixel(x_gradients, j, i, 0) * get_pixel(y_gradients, j, i, 0));
+        }
+    }
+    return convolve_image(S, make_gaussian_filter(sigma), 1);
 }
 
 // Estimate the cornerness of each pixel given a structure matrix S.
@@ -125,6 +136,11 @@ image cornerness_response(image S)
     image R = make_image(S.w, S.h, 1);
     // TODO: fill in R, "cornerness" for each pixel using the structure matrix.
     // We'll use formulation det(S) - alpha * trace(S)^2, alpha = .06.
+    for(int i = 0; i < R.h; i++){
+        for(int j = 0; j < R.w; j++){
+            set_pixel(R, j, i, 0, det(S) - 0.06 * pow(trace(S), 2));
+        }
+    }
     return R;
 }
 
