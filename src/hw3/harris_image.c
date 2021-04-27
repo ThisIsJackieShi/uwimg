@@ -163,11 +163,11 @@ image nms_image(image im, int w)
     //             set response to be very low (I use -999999 [why not 0??])
     for(int i = 0; i < r.h; i++){
         for(int j = 0; j < r.w; j++){
-            float this_value = get_pixel(r, j, i, 0);
+            float this_value = get_pixel(im, j, i, 0);
             int max = 1;
             for(int m = -w; m < w + 1; m++){
                 for(int n = -w; n < w + 1; n++){
-                    if(get_pixel(r, j+m, i+n, 0) > this_value){
+                    if(get_pixel(im, j+m, i+n, 0) > this_value){
                         max = 0;
                     }
                 }
