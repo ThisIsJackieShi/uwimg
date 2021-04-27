@@ -69,7 +69,7 @@ def field_panorama():
 
 draw_corners()
 draw_matches()
-easy_panorama()
+# easy_panorama()
 #rainier_panorama()
 #field_panorama()
 
