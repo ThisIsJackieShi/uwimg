@@ -174,7 +174,6 @@ match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
     qsort(m, an, sizeof(match), match_compare);
     match* unique = calloc(an, sizeof(match));
     for(i = 0; i < an; i++){
-        printf("distance=%f\n", m[i].distance);
         if (seen[m[i].bi] == 0) {
             unique[count] = m[i];
             count++;
