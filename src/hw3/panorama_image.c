@@ -352,7 +352,6 @@ matrix RANSAC(match *m, int n, float thresh, int k, int cutoff)
             free_matrix(H);
             H = compute_homography(m, inliers);
             inliers = model_inliers(H, m, n, thresh);
-            printf("old_best: %d, new_best: %d\n", best, inliers);
             free_matrix(Hb);
             Hb = H;
             best = inliers;
@@ -387,7 +386,6 @@ image combine_images(image a, image b, matrix H)
     botright.y = MAX(c1.y, MAX(c2.y, MAX(c3.y, c4.y)));
     topleft.x = MIN(c1.x, MIN(c2.x, MIN(c3.x, c4.x)));
     topleft.y = MIN(c1.y, MIN(c2.y, MIN(c3.y, c4.y)));
-    printf("topleft:(%f, %f), botright(%f, %f)", topleft.x, topleft.y, botright.x, botright.y);
 
     // Find how big our new image should be and the offsets from image a.
     int dx = MIN(0, topleft.x);
@@ -398,7 +396,6 @@ image combine_images(image a, image b, matrix H)
     // Can disable this if you are making very big panoramas.
     // Usually this means there was an error in calculating H.
     if(w > 7000 || h > 7000){
-        fprintf(stderr, "output too big, stopping\n");
         free_matrix(Hinv);
         return copy_image(a);
     }
