@@ -7,7 +7,7 @@
 #include "matrix.h"
 #include <time.h>
 
-// collaborated with Wangyuan
+// collaborated with Jiajie Shi
 
 // Frees an array of descriptors.
 // descriptor *d: the array.
