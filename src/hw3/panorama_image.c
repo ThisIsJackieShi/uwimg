@@ -215,7 +215,7 @@ point project_point(matrix H, point p)
 float point_distance(point p, point q)
 {
     // TODO: should be a quick one.
-    return sqrt(pow(p.x - q.x, 2) + pow(p.y - q.y, 2));
+    return sqrtf(pow(p.x - q.x, 2) + pow(p.y - q.y, 2));
 }
 
 // Count number of inliers in a set of matches. Should also bring inliers
@@ -229,21 +229,20 @@ float point_distance(point p, point q)
 //          so that the inliers are first in the array. For drawing.
 int model_inliers(matrix H, match *m, int n, float thresh)
 {
-    int i;
     int count = 0;
-    int unmatch = 0;
+    int unmatch = n - 1;
     // TODO: count number of matches that are inliers
     // i.e. distance(H*p, q) < thresh
     // Also, sort the matches m so the inliers are the first 'count' elements.
-    for (i = 0; i < n; i++) {
+    while (count <= unmatch) {
         point projected = project_point(H, m[count].p);
         if (point_distance(projected, m[count].q) < thresh) {
             count++;
         } else {  // not a match, switch to end
             match temp = m[count];
-            m[count] = m[n - unmatch - 1];
-            m[n - unmatch - 1] = temp;
-            unmatch++;
+            m[count] = m[unmatch];
+            m[unmatch] = temp;
+            unmatch--;
         }
     }
     return count;
@@ -347,18 +346,21 @@ matrix RANSAC(match *m, int n, float thresh, int k, int cutoff)
     // if we get to the end return the best homography
     for (int itr = 0; itr < k; itr++) {
         randomize_matches(m, n);
-        printf("used matches: (%.2f, %.2f)->(%.2f, %.2f), (%.2f, %.2f)->(%.2f, %.2f)\n", 
-        m[0].p.x, m[0].p.y, m[0].q.x, m[0].q.y, m[1].p.x, m[1].p.y, m[1].q.x, m[1].q.y);
         matrix H = compute_homography(m, 4);         // use first 4 matches
         int inliers = model_inliers(H, m, n, thresh);
-        printf("inliers: %d\n", inliers);
         if (inliers > best) {
-            H = compute_homography(m, n);
+            free_matrix(H);
+            H = compute_homography(m, inliers);
+            inliers = model_inliers(H, m, n, thresh);
+            printf("old_best: %d, new_best: %d\n", best, inliers);
+            free_matrix(Hb);
             Hb = H;
             best = inliers;
             if (best > cutoff) {
                 return Hb;
             }
+        } else {
+            free_matrix(H);
         }
     }
 
@@ -397,6 +399,7 @@ image combine_images(image a, image b, matrix H)
     // Usually this means there was an error in calculating H.
     if(w > 7000 || h > 7000){
         fprintf(stderr, "output too big, stopping\n");
+        free_matrix(Hinv);
         return copy_image(a);
     }
 
@@ -412,7 +415,6 @@ image combine_images(image a, image b, matrix H)
             }
         }
     }
-    return c;
 
     // TODO: Paste in image b as well.
     // You should loop over some points in the new image (which? all?)
@@ -422,12 +424,12 @@ image combine_images(image a, image b, matrix H)
     // TODO: why not all the points?
     int yStart = (int) MAX(0, topleft.y);
     int xStart = (int) MAX(0, topleft.x);
-    int yEnd = (int) botright.y - dy;
+    int yEnd = (int) botright.y - dy;   
     int xEnd = (int) botright.x - dx;
     for (int k = 0; k < a.c; k++) {
-        for (int j = 0; j < c.h; j++) {
-            for (int i = 0; i < c.w; i++) {
-                point pb = project_point(H, make_point(i, j));
+        for (int j = yStart; j < yEnd; j++) {
+            for (int i = xStart; i < xEnd; i++) {
+                point pb = project_point(H, make_point(i + dx, j + dy));
                 if (pb.x > 0 && pb.x < b.w && pb.y > 0 && pb.y < b.h) {
                     float val = bilinear_interpolate(b, pb.x, pb.y, k);
                     set_pixel(c, i, j, k, val);
@@ -435,6 +437,8 @@ image combine_images(image a, image b, matrix H)
             }
         }
     }
+
+    free_matrix(Hinv);
 
     return c;
 }
@@ -464,7 +468,7 @@ image panorama_image(image a, image b, float sigma, float thresh, int nms, float
     // Run RANSAC to find the homography
     matrix H = RANSAC(m, mn, inlier_thresh, iters, cutoff);
 
-    if(1){
+    if(0){
         // Mark corners and matches between images
         mark_corners(a, ad, an);
         mark_corners(b, bd, bn);
