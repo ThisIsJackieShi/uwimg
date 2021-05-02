@@ -68,7 +68,7 @@ image make_integral_image(image im)
     for(int c = 0; c < im.c; c++){
         for(int h = 1; h < im.h; h++){
             for(int w = 1; w < im.w; w++){
-                set_pixel(integ, w, h, c, get_pixel(im, w, h, c) 
+                set_pixel(integ, w, h, c, get_pixel(im, w, h, c)
                                         + get_pixel(integ, w - 1, h, c) + get_pixel(integ, w, h - 1, c)
                                         - get_pixel(integ, w - 1, h - 1, c));
             }
@@ -89,16 +89,33 @@ image box_filter_image(image im, int s)
     // TODO: fill in S using the integral image.
     int off = s / 2;
     for(i = 0; i < im.c; i++){
-        for(j = 0; j < im.h; j++){
-            for(k = 0; k < im.w; k++){
-                set_pixel(S, k, j, i, (get_pixel_hw4(integ, k + off, j + off, i) 
-                                    - get_pixel_hw4(integ, k - off - 1, j + off, i) 
-                                    - get_pixel_hw4(integ, k + off, j - off - 1, i)
-                                    + get_pixel_hw4(integ, k - off - 1, j - off - 1, i))
-                                    / (s * s));//MIN(s * s, (k + 1 + off) * (j + 1 + off)));
+        for(j = 0; j <= off; j++) {
+            for(k = 0; k <= off; k++) {  // upper right corner
+                float val = get_pixel(integ, k + off, j + off, i);
+                set_pixel(S, k, j, i, val / ((k + off + 1) * (j + off + 1)));
+            }
+            for (; k < im.w; k++) {  // upper region
+                float val = get_pixel(integ, k + off, j + off, i)
+                          - get_pixel(integ, k - off - 1, j + off, i);
+                set_pixel(S, k, j, i, val / ((j + off + 1) * s));
+            }
+        }
+        for(; j < im.h; j++){
+            for (k = 0; k <= off; k++) {  // left region
+                float val = get_pixel(integ, k + off, j + off, i)
+                          - get_pixel(integ, k + off, j - off - 1, i);
+                set_pixel(S, k, j, i, val / ((k + off + 1) * s));
+            }
+            for(; k < im.w; k++){  // main region
+                float val = get_pixel(integ, k + off, j + off, i)
+                          + get_pixel(integ, k - off - 1, j - off - 1, i)
+                          - get_pixel(integ, k - off - 1, j + off, i)
+                          - get_pixel(integ, k + off, j - off - 1, i);
+                set_pixel(S, k, j, i, val / (s * s));
             }
         }
     }
+    free_image(integ);
     return S;
 }
 
@@ -131,7 +148,7 @@ image time_structure_matrix(image im, image prev, int s)
             set_pixel(S, j, i, 0, pow(get_pixel(x_gradients, j, i, 0), 2));
             set_pixel(S, j, i, 1, pow(get_pixel(y_gradients, j, i, 0), 2));
             set_pixel(S, j, i, 2, get_pixel(x_gradients, j, i, 0) * get_pixel(y_gradients, j, i, 0));
-            float t_gradient = get_pixel(im, j, i, 0) - get_pixel(prev, j, i, 0); 
+            float t_gradient = get_pixel(im, j, i, 0) - get_pixel(prev, j, i, 0);
             set_pixel(S, j, i, 3, get_pixel(x_gradients, j, i, 0) * t_gradient);
             set_pixel(S, j, i, 4, t_gradient * get_pixel(y_gradients, j, i, 0));
         }
@@ -179,8 +196,8 @@ image velocity_image(image S, int stride)
 
                 vx = result.data[0][0];
                 vy = result.data[1][0];
-                free_matrix(result);    
-            } 
+                free_matrix(result);
+            }
 
             set_pixel(v, i/stride, j/stride, 0, vx);
             set_pixel(v, i/stride, j/stride, 1, vy);
@@ -230,7 +247,7 @@ void constrain_image(image im, float v)
 // returns: velocity matrix
 image optical_flow_images(image im, image prev, int smooth, int stride)
 {
-    image S = time_structure_matrix(im, prev, smooth);   
+    image S = time_structure_matrix(im, prev, smooth);
     image v = velocity_image(S, stride);
     constrain_image(v, 6);
     image vs = smooth_image(v, 2);
