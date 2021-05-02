@@ -41,6 +41,14 @@ void draw_line(image im, float x, float y, float dx, float dy)
     }
 }
 
+float get_pixel_hw4(image im, int x, int y, int c){
+    if(x < 0 || y < 0 || x >= im.w || y >= im.h){
+        return 0;
+    } else {
+        return get_pixel(im, x, y, c);
+    }
+}
+
 // Make an integral image or summed area table from an image
 // image im: image to process
 // returns: image I such that I[x,y] = sum{i<=x, j<=y}(im[i,j])
@@ -48,6 +56,24 @@ image make_integral_image(image im)
 {
     image integ = make_image(im.w, im.h, im.c);
     // TODO: fill in the integral image
+    for(int c = 0; c < im.c; c++){
+        set_pixel(integ, 0, 0, c, get_pixel(im, 0, 0, c));
+        for(int h = 1; h < im.h; h++){
+            set_pixel(integ, 0, h, c, get_pixel(im, 0, h, c) + get_pixel(integ, 0, h - 1, c));
+        }
+        for(int w = 1; w < im.w; w++){
+            set_pixel(integ, w, 0, c, get_pixel(im, w, 0, c) + get_pixel(integ, w - 1, 0, c));
+        }
+    }
+    for(int c = 0; c < im.c; c++){
+        for(int h = 1; h < im.h; h++){
+            for(int w = 1; w < im.w; w++){
+                set_pixel(integ, w, h, c, get_pixel(im, w, h, c) 
+                                        + get_pixel(integ, w - 1, h, c) + get_pixel(integ, w, h - 1, c)
+                                        - get_pixel(integ, w - 1, h - 1, c));
+            }
+        }
+    }
     return integ;
 }
 
@@ -61,6 +87,18 @@ image box_filter_image(image im, int s)
     image integ = make_integral_image(im);
     image S = make_image(im.w, im.h, im.c);
     // TODO: fill in S using the integral image.
+    int off = s / 2;
+    for(i = 0; i < im.c; i++){
+        for(j = 0; j < im.h; j++){
+            for(k = 0; k < im.w; k++){
+                set_pixel(S, k, j, i, (get_pixel_hw4(integ, k + off, j + off, i) 
+                                    - get_pixel_hw4(integ, k - off - 1, j + off, i) 
+                                    - get_pixel_hw4(integ, k + off, j - off - 1, i)
+                                    + get_pixel_hw4(integ, k - off - 1, j - off - 1, i))
+                                    / (s * s));//MIN(s * s, (k + 1 + off) * (j + 1 + off)));
+            }
+        }
+    }
     return S;
 }
 
@@ -82,7 +120,24 @@ image time_structure_matrix(image im, image prev, int s)
 
     // TODO: calculate gradients, structure components, and smooth them
 
-    image S;
+    image S = make_image(im.w, im.h, 5);
+
+    image dx_filter = make_gx_filter();
+    image dy_filter = make_gy_filter();
+    image x_gradients = convolve_image(im, dx_filter, 0);
+    image y_gradients = convolve_image(im, dy_filter, 0);
+    for(i = 0; i < im.h; i++){
+        for(int j = 0; j < im.w; j++){
+            set_pixel(S, j, i, 0, pow(get_pixel(x_gradients, j, i, 0), 2));
+            set_pixel(S, j, i, 1, pow(get_pixel(y_gradients, j, i, 0), 2));
+            set_pixel(S, j, i, 2, get_pixel(x_gradients, j, i, 0) * get_pixel(y_gradients, j, i, 0));
+            float t_gradient = get_pixel(im, j, i, 0) - get_pixel(prev, j, i, 0); 
+            set_pixel(S, j, i, 3, get_pixel(x_gradients, j, i, 0) * t_gradient);
+            set_pixel(S, j, i, 4, t_gradient * get_pixel(y_gradients, j, i, 0));
+        }
+    }
+
+    S = box_filter_image(S, s);
 
     if(converted){
         free_image(im); free_image(prev);
@@ -107,8 +162,25 @@ image velocity_image(image S, int stride)
             float Iyt = S.data[i + S.w*j + 4*S.w*S.h];
 
             // TODO: calculate vx and vy using the flow equation
+            matrix T = make_matrix(2, 1);
+            M.data[0][0] = Ixx;
+            M.data[0][1] = Ixy;
+            M.data[1][0] = Ixy;
+            M.data[1][1] = Iyy;
+            T.data[0][0] = -Ixt;
+            T.data[1][0] = -Iyt;
+
+            matrix invert = matrix_invert(M);
             float vx = 0;
             float vy = 0;
+
+            if(invert.cols != 0){
+                matrix result = matrix_mult_matrix(invert, T);
+
+                vx = result.data[0][0];
+                vy = result.data[1][0];
+                free_matrix(result);    
+            } 
 
             set_pixel(v, i/stride, j/stride, 0, vx);
             set_pixel(v, i/stride, j/stride, 1, vy);
