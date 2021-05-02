@@ -49,6 +49,35 @@ float get_pixel_hw4(image im, int x, int y, int c){
     }
 }
 
+// calculate the integral of the image from (x0, y0) to (x1, y1);
+float get_integral(image im, int x0, int x1, int y0, int y1, int c) {
+    if (x0 <= 0) {
+        if (y0 <= 0) {
+            return get_pixel(im, x1, y1, c);
+        }
+        // y0 > 0
+        return get_pixel(im, x1, y1, c) - get_pixel(im, x1, y0 - 1, c);
+    }
+    // x0 >= 0
+    if (y0 <= 0) {
+        return get_pixel(im, x1, y1, c) - get_pixel(im, x0 - 1, y1, c);
+    }
+    // main region, x0 >= 0 && y0 >= 0
+    return get_pixel(im, x1, y1, c)
+          + get_pixel(im, x0 - 1, y0 - 1, c)
+          - get_pixel(im, x0 - 1, y1, c)
+          - get_pixel(im, x1, y0 - 1, c);
+}
+
+// calculate the area of image from (x0, y0) to (x1, y1);
+int get_area(image im, int x0, int x1, int y0, int y1) {
+    x0 = MAX(x0, 0);
+    y0 = MAX(y0, 0);
+    x1 = MIN(x1, im.w - 1);
+    y1 = MIN(y1, im.h - 1);
+    return (x1 - x0 + 1) * (y1 - y0 + 1);
+}
+
 // Make an integral image or summed area table from an image
 // image im: image to process
 // returns: image I such that I[x,y] = sum{i<=x, j<=y}(im[i,j])
@@ -89,29 +118,11 @@ image box_filter_image(image im, int s)
     // TODO: fill in S using the integral image.
     int off = s / 2;
     for(i = 0; i < im.c; i++){
-        for(j = 0; j <= off; j++) {
-            for(k = 0; k <= off; k++) {  // upper right corner
-                float val = get_pixel(integ, k + off, j + off, i);
-                set_pixel(S, k, j, i, val / ((k + off + 1) * (j + off + 1)));
-            }
-            for (; k < im.w; k++) {  // upper region
-                float val = get_pixel(integ, k + off, j + off, i)
-                          - get_pixel(integ, k - off - 1, j + off, i);
-                set_pixel(S, k, j, i, val / ((j + off + 1) * s));
-            }
-        }
-        for(; j < im.h; j++){
-            for (k = 0; k <= off; k++) {  // left region
-                float val = get_pixel(integ, k + off, j + off, i)
-                          - get_pixel(integ, k + off, j - off - 1, i);
-                set_pixel(S, k, j, i, val / ((k + off + 1) * s));
-            }
-            for(; k < im.w; k++){  // main region
-                float val = get_pixel(integ, k + off, j + off, i)
-                          + get_pixel(integ, k - off - 1, j - off - 1, i)
-                          - get_pixel(integ, k - off - 1, j + off, i)
-                          - get_pixel(integ, k + off, j - off - 1, i);
-                set_pixel(S, k, j, i, val / (s * s));
+        for(j = 0; j <= im.h; j++) {
+            for(k = 0; k <= im.w; k++) {
+                float val = get_integral(integ, k - off, k + off, j - off, j + off, i);
+                float area = get_area(im, k - off, k + off, j - off, j + off);
+                set_pixel(S, k, j, i, val / area);
             }
         }
     }
