@@ -6,8 +6,9 @@
 #include "image.h"
 #include "matrix.h"
 #include <time.h>
+#define TWOPI 6.2831853
 
-// collaborated with Wangyuan
+// collaborated with Jiajie Shi
 
 // Frees an array of descriptors.
 // descriptor *d: the array.
@@ -86,7 +87,17 @@ void mark_corners(image im, descriptor *d, int n)
 image make_1d_gaussian(float sigma)
 {
     // TODO: optional, make separable 1d Gaussian.
-    return make_image(1,1,1);
+    int size = (int) ceil(sigma * 6.0);
+    if (size % 2 == 0) {
+        size++;
+    }
+    image result = make_image(size, 1, 1);
+    float denom = 1 / (sigma * sqrt(TWOPI * 2));
+    for (int i = 0; i < size; i++) {
+        float e =  exp(- (pow(i - size, 2)) / (2 * pow(sigma, 2)));
+        set_pixel(result, i, 0, 0, e * denom);
+    }
+    return result;
 }
 
 // Smooths an image using separable Gaussian filter.
@@ -95,7 +106,7 @@ image make_1d_gaussian(float sigma)
 // returns: smoothed image.
 image smooth_image(image im, float sigma)
 {
-    if(1){
+    if(0){
         image g = make_gaussian_filter(sigma);
         image s = convolve_image(im, g, 1);
         free_image(g);
@@ -103,7 +114,17 @@ image smooth_image(image im, float sigma)
     } else {
         // TODO: optional, use two convolutions with 1d gaussian filter.
         // If you implement, disable the above if check.
-        return copy_image(im);
+        image g = make_1d_gaussian(sigma);
+        image s = convolve_image(im, g, 1);
+        image g2 = make_image(1, g.w, 1);
+        for (int i = 0; i < g.w; i++) {
+            set_pixel(g2, 0, i, 0, get_pixel(g, i, 0, 0));
+        }
+        image s2 = convolve_image(s, g2, 1);
+        free_image(g);
+        free_image(s);
+        free_image(g2);
+        return s2;
     }
 }
 

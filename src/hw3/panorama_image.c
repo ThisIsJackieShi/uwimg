@@ -6,7 +6,7 @@
 #include "image.h"
 #include "matrix.h"
 
-// collaborated with Wangyuan
+// collaborated with Jiajie Shi
 
 // Comparator for matches
 // const void *a, *b: pointers to the matches to compare.
@@ -482,6 +482,28 @@ image panorama_image(image a, image b, float sigma, float thresh, int nms, float
     return comb;
 }
 
+// Project a point onto a cylinder, then back on to the image plane
+point cylindrical_point(point original, point center, float f) {
+    float theta = (original.x - center.x) / f;
+    float h = (original.y - center.y) / f;
+
+    float x_unit = sin(theta);
+    float y_unit = h;
+    float z_unit = cos(theta);
+
+    float new_x = f * x_unit / z_unit + center.x;
+    float new_y = f * y_unit / z_unit + center.y;
+
+    return make_point(new_x, new_y);
+}
+
+// do the inverse to calculate the boundary
+point invert_cylindrical_point(point new, point center, float f) {
+    float old_x = f * atan2(new.x - center.x, f) + center.x;
+    float old_y = (new.y - center.y) * cos((old_x - center.x) / f) + center.y;
+    return make_point(old_x, old_y);
+}
+
 // Project an image onto a cylinder.
 // image im: image to project.
 // float f: focal length used to take image (in pixels).
@@ -489,6 +511,29 @@ image panorama_image(image a, image b, float sigma, float thresh, int nms, float
 image cylindrical_project(image im, float f)
 {
     //TODO: project image onto a cylinder
-    image c = copy_image(im);
-    return c;
+    point center = make_point(im.w / 2.0, im.h / 2.0);
+    
+    point upper_left = invert_cylindrical_point(make_point(0, 0), center, f);
+    point lower_right = invert_cylindrical_point(make_point(im.w, im.h), center, f);
+
+    float dx = upper_left.x;
+    float dy = 0;
+
+    image res = make_image(lower_right.x - upper_left.x, im.h, im.c);
+
+    for (int k = 0; k < res.c; k++) {
+        for (int j = 0; j < res.h; j++) {
+            for (int i = 0; i < res.w; i++) {
+                point new = make_point(i + dx, j + dy);
+                point original = cylindrical_point(new, center, f);
+                if (original.x >= 0 && original.x < im.w && original.y >= 0 && original.y < im.h) {
+                    float val = bilinear_interpolate(im, original.x, original.y, k);
+                    set_pixel(res, i, j, k, val);
+                }
+            }
+        }
+    }
+
+    return res;
 }
+
