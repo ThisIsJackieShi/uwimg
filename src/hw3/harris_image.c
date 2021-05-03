@@ -94,7 +94,7 @@ image make_1d_gaussian(float sigma)
     image result = make_image(size, 1, 1);
     float denom = 1 / (sigma * sqrt(TWOPI * 2));
     for (int i = 0; i < size; i++) {
-        float e =  exp(- (pow(i - size, 2)) / (2 * pow(sigma, 2)));
+        float e =  exp(- (pow(i - size / 2, 2)) / (2 * pow(sigma, 2)));
         set_pixel(result, i, 0, 0, e * denom);
     }
     return result;
