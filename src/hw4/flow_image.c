@@ -6,6 +6,8 @@
 #include "image.h"
 #include "matrix.h"
 
+// collaborated with Wang Yuan
+
 // Draws a line on an image with color corresponding to the direction of line
 // image im: image to draw line on
 // float x, y: starting point of line
