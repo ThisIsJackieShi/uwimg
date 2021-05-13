@@ -15,18 +15,25 @@ void activate_matrix(matrix m, ACTIVATION a)
         for(j = 0; j < m.cols; ++j){
             double x = m.data[i][j];
             if(a == LOGISTIC){
-                // TODO
+                x = 1/(1+exp(-x));
             } else if (a == RELU){
-                // TODO
+                if(x < 0){
+                    x = 0;
+                }
             } else if (a == LRELU){
-                // TODO
+                if(x < 0){
+                    x = 0.1 * x;
+                }
             } else if (a == SOFTMAX){
-                // TODO
+                x = exp(x);
             }
             sum += m.data[i][j];
         }
         if (a == SOFTMAX) {
             // TODO: have to normalize by sum if we are using SOFTMAX
+            for(j = 0; j < m.cols; ++j){
+                x = x/sum;
+            }
         }
     }
 }
@@ -43,6 +50,17 @@ void gradient_matrix(matrix m, ACTIVATION a, matrix d)
         for(j = 0; j < m.cols; ++j){
             double x = m.data[i][j];
             // TODO: multiply the correct element of d by the gradient
+            if(a == LOGISTIC){
+                d.data[i][j] = d.data[i][j] * x * (1 - x);
+            } else if (a == RELU){
+                if(x < 0){
+                    d.data[i][j] = 0;
+                }
+            } else if (a == LRELU){
+                if(x < 0){
+                    d.data[i][j] = d.data[i][j] * 0.1;
+                }
+            } 
         }
     }
 }
@@ -58,7 +76,7 @@ matrix forward_layer(layer *l, matrix in)
 
 
     // TODO: fix this! multiply input by weights and apply activation function.
-    matrix out = make_matrix(in.rows, l->w.cols);
+    matrix out = activate_matrix(matrix_mult_matrix(in, l->w), l->activation);
 
 
     free_matrix(l->out);// free the old output
@@ -75,7 +93,7 @@ matrix backward_layer(layer *l, matrix delta)
     // 1.4.1
     // delta is dL/dy
     // TODO: modify it in place to be dL/d(xw)
-
+    delta = gradient_matrix()
 
     // 1.4.2
     // TODO: then calculate dL/dw and save it in l->dw
